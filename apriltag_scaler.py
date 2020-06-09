@@ -1,4 +1,5 @@
 import math
+import os
 
 
 class ApriltagScaler(object):
@@ -50,11 +51,18 @@ class ApriltagScaler(object):
         scale_factor = png_pix/10*100
         return self.scale_factor_2_marker_size(scale_factor)
 
-    def scale_single_file(self, file_path):
-        pass
+    def scale_command(self, scale_factor, file_path):
+        assert os.path.isfile(file_path)
+        base = os.path.splitext(file_path)[0]
+        extension = os.path.splitext(file_path)[1]
+        new_size = self._pix_2_mm(scale_factor*8)
+        new_path = f"{base}_{scale_factor*100}%_{new_size:.2f}mm{extension}"
+        command = f"convert {file_path} -scale {scale_factor*100}% {new_path}"
+        return command
 
 if __name__ == "__main__":
     scaler = ApriltagScaler()
     # print(scaler.scale_factor_2_marker_size(600))
     # print(scaler.png_pix_2_marker_size(60))
-    print(scaler.recommended_value(30))
+    # print(scaler.recommended_value(30))
+    print(scaler.scale_command(10, "D:/tag36_11_00000.png"))
