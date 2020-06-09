@@ -3,20 +3,37 @@ import math
 
 class ApriltagScaler(object):
     def __init__(self, printer_dpi=72):
-        self.dpi = printer_dpi
-        self.inch_mm = 25.4
+        self.dpi = printer_dpi  # normal printer default DPI = 72
+        self.inch_mm = 25.4  # 1inch = 25.4mm
         self.marker_mm = None
         self.marker_pix = None
         self.png_mm = None
         self.png_pix = None
 
     def recommended_value(self, dst_marker_mm, round_func= math.floor):
+        """
+        given a wanted marker size, return the recommended data
+
+        when we want to scale the png marker file, the scaler factor should be an interger,
+        otherwise the image after scaling will be fuzzy, this reduces the poisitioning accuracy
+
+        so the result will be rounded to get a recommended value
+
+        for aprital 36h11, marker size = 8x8 pix
+        png files downloaded from https://github.com/AprilRobotics/apriltag-imgs has a size of 10x10 pix
+        => blank border = 1pix width
+
+        :param dst_marker_mm: destination marker size in mm
+        :type dst_marker_mm: float
+        :param round_func: function used to round the calculated value, defaults to math.floor
+        :type round_func: function, optional
+        :return: scaled marker size in mm, scaling factor
+        :rtype: float, int
+        """
         dst_marker_pix = self._mm_2_pix(dst_marker_mm)
-        dst_png_pix = dst_marker_pix/8*10
-        # png_pix should be an integer multiple of 10
-        # to prevent problem by scale
-        png_pix = round_func(dst_png_pix/10)*10  
-        return f"marker_size: {self._pix_2_mm(png_pix/10*8)}mm\npng_size: {png_pix}pix, scale_factor: {png_pix/10*100}%"
+        scale_factor = round_func(dst_marker_pix/8)
+        marker_size = self._pix_2_mm(scale_factor*8)
+        return marker_size, scale_factor
     
     def _mm_2_pix(self, mm):
         return self.dpi*mm/self.inch_mm
@@ -32,6 +49,9 @@ class ApriltagScaler(object):
     def png_pix_2_marker_size(self, png_pix):
         scale_factor = png_pix/10*100
         return self.scale_factor_2_marker_size(scale_factor)
+
+    def scale_single_file(self, file_path):
+        pass
 
 if __name__ == "__main__":
     scaler = ApriltagScaler()
