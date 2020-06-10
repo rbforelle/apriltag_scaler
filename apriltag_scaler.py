@@ -25,21 +25,21 @@ class ApriltagScaler(object):
         :return: scaled tag size in mm, scale factor
         :rtype: float, int
         """
-        dst_tag_pix = self._mm_2_pix(dst_tag_mm)
+        dst_tag_pix = self.mm_2_pix(dst_tag_mm)
         scale_factor = round_func(dst_tag_pix/self.origin_tag_size_pix)
-        tag_size = self._pix_2_mm(scale_factor*self.origin_tag_size_pix)
+        tag_size = self.pix_2_mm(scale_factor*self.origin_tag_size_pix)
         return tag_size, scale_factor
     
-    def _mm_2_pix(self, mm):
+    def mm_2_pix(self, mm):
         return self.dpi*mm/self.inch_mm
 
-    def _pix_2_mm(self, pix):
+    def pix_2_mm(self, pix):
         return pix*self.inch_mm/self.dpi
 
     def scale_factor_2_tag_size(self, scale_factor):
         png_pix = scale_factor*self.origin_img_size_pix
         tag_pix = png_pix/self.origin_img_size_pix*self.origin_tag_size_pix
-        return self._pix_2_mm(tag_pix)
+        return self.pix_2_mm(tag_pix)
     
     def png_pix_2_tag_size(self, png_pix):
         scale_factor = png_pix/self.origin_img_size_pix
@@ -73,7 +73,7 @@ class ApriltagScaler(object):
         file_name = os.path.splitext(basename)[0]
         extension = os.path.splitext(basename)[1]
         # calculate new file size based on scale factor
-        new_size = self._pix_2_mm(scale_factor*self.origin_tag_size_pix)
+        new_size = self.pix_2_mm(scale_factor*self.origin_tag_size_pix)
         new_path = f"{os.path.join(dst_dir, file_name)}_{scale_factor*100}%_{new_size:.2f}mm{extension}"
 
         scaled_img_size = scale_factor*self.origin_img_size_pix + border_width_pix*2
@@ -120,11 +120,22 @@ class ApriltagScaler(object):
         
 
 if __name__ == "__main__":
-    scaler = ApriltagScaler(printer_dpi=72, origin_tag_size_pix=8, origin_img_size_pix=10)
-    print(scaler.scale_factor_2_tag_size(10))
-    print(scaler.png_pix_2_tag_size(60))
-    print(scaler.recommended_value(30))
-    print(scaler.scale_command(10, "demo/tag36_11_00000.png"))
-    scaler.convert("demo/", dst_dir = "demo/scaled/", tag_size = 40)
+    scaler_36h11 = ApriltagScaler(printer_dpi=72, origin_tag_size_pix=8, origin_img_size_pix=10)
+    print(scaler_36h11.scale_factor_2_tag_size(10))
+    print(scaler_36h11.png_pix_2_tag_size(60))
+    print(scaler_36h11.recommended_value(30))
+    print(scaler_36h11.scale_command(10, "demo/tag36h11/origin/tag36_11_00000.png"))
+    scaler_36h11.convert("demo/tag36h11/origin/", dst_dir = "demo/tag36h11/scaled/", tag_size = 40)
 
-    os.system('montage demo/scaled/* -geometry +12+12 demo/output/output.png')
+    os.system('montage demo/tag36h11/scaled/* -geometry +12+12 demo/output_tag36h11.png')
+    
+    '''
+    scaler_16h5 = ApriltagScaler(printer_dpi=72, origin_tag_size_pix=6, origin_img_size_pix=8)
+    print(scaler_16h5.scale_factor_2_tag_size(10))
+    print(scaler_16h5.png_pix_2_tag_size(60))
+    print(scaler_16h5.recommended_value(30))
+    print(scaler_16h5.scale_command(10, "demo/tag16h5/origin/tag16_05_00000.png"))
+    scaler_16h5.convert("demo/tag16h5/origin/", dst_dir = "demo/tag16h5/scaled/", tag_size = 40)
+
+    os.system('montage demo/tag16h5/scaled/* -geometry +12+12 demo/output_tag16h5.png')
+    '''
