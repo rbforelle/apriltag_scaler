@@ -52,32 +52,48 @@ class ApriltagScaler(object):
         return self.scale_factor_2_marker_size(scale_factor)
 
     def scale_command(self, scale_factor, file_path, dst_dir=None):
+        """
+        return command to scale the png file
+        :param scale_factor:
+        :type scale_factor: int
+        :param file_path: path of the file to scale
+        :type file_path: string
+        :param dst_dir: output dir, defaults to None
+        :type dst_dir: string, optional
+        :return: scale command
+        :rtype: string
+        """
+        # check file
         assert os.path.isfile(file_path), file_path
         basedir = os.path.dirname(file_path)
-        if dst_dir == None:
+        if dst_dir == None:  # if dst_dir not defined, use the same dir as output
             dst_dir = basedir
         else:
             assert os.path.isdir(dst_dir), dst_dir
+        # split file name    
         basename = os.path.basename(file_path)
         file_name = os.path.splitext(basename)[0]
         extension = os.path.splitext(basename)[1]
+        # calculate new file size based on scale factor
         new_size = self._pix_2_mm(scale_factor*8)
         new_path = f"{os.path.join(dst_dir, file_name)}_{scale_factor*100}%_{new_size:.2f}mm{extension}"
+        # to use this command, make sure that ImageMagick has already been installed
         command = f"convert {file_path} -scale {scale_factor*100}% {new_path}"
         return command
     
     def convert(self, src_dir, dst_dir=None, scale_factor = None, marker_size = None):
         # check input data
-        assert os.path.isdir(src_dir)
+        assert os.path.isdir(src_dir), src_dir
         if dst_dir is not None:
             assert os.path.isdir(dst_dir)
         if not (scale_factor or marker_size):
             raise ValueError
 
-        # calculate recommended scaling factor
+        # calculate recommended scaling factor if no scale_factor defined
         if scale_factor is None and marker_size is not None:
             real_marker_size, scale_factor = self.recommended_value(marker_size)
 
+        # convert all files in the directory
         for file_name in os.listdir(src_dir):
             basedir = os.path.dirname(src_dir)
             file_path = os.path.join(basedir, file_name)
@@ -85,13 +101,14 @@ class ApriltagScaler(object):
                 continue
             command = self.scale_command(scale_factor, file_path, dst_dir)
             print(command)
+            os.system(command)
 
 
 if __name__ == "__main__":
     scaler = ApriltagScaler()
     # print(scaler.scale_factor_2_marker_size(600))
     # print(scaler.png_pix_2_marker_size(60))
-    # print(scaler.recommended_value(30))
+    # print(scaler.recommended_value(38))
     # print(scaler.scale_command(10, "D:/test_dir/tag36_11_00000.png"))
     # scaler.convert("D:/test_dir/", scale_factor=10)
-    scaler.convert("D:/test_dir/", dst_dir = "D:/test_dir/converted/", marker_size = 40)
+    scaler.convert("/mnt/d/test_dir/", dst_dir = "/mnt/d/test_dir/converted/", marker_size = 38)
