@@ -108,4 +108,4 @@ scaler_36h9.convert("demo/tag36h9/origin/", dst_dir = "demo/tag36h9/scaled/", ta
 montage demo/tag36h11/scaled/* -geometry +12+12 demo/output_tag36h11.png
 ```
 
-Print it with 72 DPI, set 28.22mm in the config file, that's all!
+Print it with 72 DPI, set 39.51mm in the config file, that's all!
