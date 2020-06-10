@@ -11,7 +11,7 @@ class ApriltagScaler(object):
         self.png_mm = None
         self.png_pix = None
 
-    def recommended_value(self, dst_marker_mm, round_func= math.floor):
+    def recommended_value(self, dst_marker_mm, round_func = math.floor):
         """
         given a wanted marker size, return the recommended data
 
@@ -43,15 +43,15 @@ class ApriltagScaler(object):
         return pix*self.inch_mm/self.dpi
 
     def scale_factor_2_marker_size(self, scale_factor):
-        png_pix = scale_factor/100*10
+        png_pix = scale_factor*10
         marker_pix = png_pix/10*8
         return self._pix_2_mm(marker_pix)
     
     def png_pix_2_marker_size(self, png_pix):
-        scale_factor = png_pix/10*100
+        scale_factor = png_pix/10
         return self.scale_factor_2_marker_size(scale_factor)
 
-    def scale_command(self, scale_factor, file_path, dst_dir=None):
+    def scale_command(self, scale_factor, file_path, dst_dir=None, with_label=False):
         """
         return command to scale the png file
         :param scale_factor:
@@ -60,8 +60,10 @@ class ApriltagScaler(object):
         :type file_path: string
         :param dst_dir: output dir, defaults to None
         :type dst_dir: string, optional
-        :return: scale command
-        :rtype: string
+        :param with_label: if true, set label for the image, optional
+        :type with_label: bool
+        :return: scale commands
+        :rtype: list[string]
         """
         # check file
         assert os.path.isfile(file_path), file_path
@@ -102,7 +104,7 @@ class ApriltagScaler(object):
             file_path = os.path.join(basedir, file_name)
             if not os.path.isfile(file_path):
                 continue
-            commands = self.scale_command(scale_factor, file_path, dst_dir)
+            commands = self.scale_command(scale_factor, file_path, dst_dir, with_label=True)
             for command in commands:
                 print(command)
                 os.system(command)
@@ -112,9 +114,8 @@ class ApriltagScaler(object):
 
 if __name__ == "__main__":
     scaler = ApriltagScaler()
-    # print(scaler.scale_factor_2_marker_size(600))
-    # print(scaler.png_pix_2_marker_size(60))
-    # print(scaler.recommended_value(38))
-    # print(scaler.scale_command(10, "D:/test_dir/tag36_11_00000.png"))
-    # scaler.convert("D:/test_dir/", scale_factor=10)
+    print(scaler.scale_factor_2_marker_size(10))
+    print(scaler.png_pix_2_marker_size(60))
+    print(scaler.recommended_value(30))
+    print(scaler.scale_command(10, "/mnt/d/test_dir/tag36_11_00000.png"))
     scaler.convert("/mnt/d/test_dir/", dst_dir = "/mnt/d/test_dir/converted/", marker_size = 38)
