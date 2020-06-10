@@ -3,38 +3,32 @@ import os
 
 
 class ApriltagScaler(object):
-    def __init__(self, printer_dpi=72):
+    def __init__(self, printer_dpi=72, origin_tag_size_pix = 8, origin_img_size_pix = 10):
         self.dpi = printer_dpi  # normal printer default DPI = 72
+        self.origin_tag_size_pix = origin_tag_size_pix
+        self.origin_img_size_pix = origin_img_size_pix
         self.inch_mm = 25.4  # 1inch = 25.4mm
-        self.marker_mm = None
-        self.marker_pix = None
-        self.png_mm = None
-        self.png_pix = None
 
-    def recommended_value(self, dst_marker_mm, round_func = math.floor):
+    def recommended_value(self, dst_tag_mm, round_func = math.floor):
         """
-        given a wanted marker size, return the recommended data
+        given a wanted tag size, return the recommended data
 
-        when we want to scale the png marker file, the scaler factor should be an interger,
-        otherwise the image after scaling will be fuzzy, this reduces the poisitioning accuracy
+        when we try to scale the png tag file, the scale factor should be an interger,
+        otherwise the image gets blurry after scaling, this reduces the poisitioning accuracy
 
-        so the result will be rounded to get a recommended value
+        so the calculated scale factor will be rounded to get a recommended value
 
-        for aprital 36h11, marker size = 8x8 pix
-        png files downloaded from https://github.com/AprilRobotics/apriltag-imgs has a size of 10x10 pix
-        => blank border = 1pix width
-
-        :param dst_marker_mm: destination marker size in mm
-        :type dst_marker_mm: float
+        :param dst_tag_mm: destination tag size in mm
+        :type dst_tag_mm: float
         :param round_func: function used to round the calculated value, defaults to math.floor
         :type round_func: function, optional
-        :return: scaled marker size in mm, scaling factor
+        :return: scaled tag size in mm, scale factor
         :rtype: float, int
         """
-        dst_marker_pix = self._mm_2_pix(dst_marker_mm)
-        scale_factor = round_func(dst_marker_pix/8)
-        marker_size = self._pix_2_mm(scale_factor*8)
-        return marker_size, scale_factor
+        dst_tag_pix = self._mm_2_pix(dst_tag_mm)
+        scale_factor = round_func(dst_tag_pix/self.origin_tag_size_pix)
+        tag_size = self._pix_2_mm(scale_factor*self.origin_tag_size_pix)
+        return tag_size, scale_factor
     
     def _mm_2_pix(self, mm):
         return self.dpi*mm/self.inch_mm
@@ -42,18 +36,18 @@ class ApriltagScaler(object):
     def _pix_2_mm(self, pix):
         return pix*self.inch_mm/self.dpi
 
-    def scale_factor_2_marker_size(self, scale_factor):
-        png_pix = scale_factor*10
-        marker_pix = png_pix/10*8
-        return self._pix_2_mm(marker_pix)
+    def scale_factor_2_tag_size(self, scale_factor):
+        png_pix = scale_factor*self.origin_img_size_pix
+        tag_pix = png_pix/self.origin_img_size_pix*self.origin_tag_size_pix
+        return self._pix_2_mm(tag_pix)
     
-    def png_pix_2_marker_size(self, png_pix):
-        scale_factor = png_pix/10
-        return self.scale_factor_2_marker_size(scale_factor)
+    def png_pix_2_tag_size(self, png_pix):
+        scale_factor = png_pix/self.origin_img_size_pix
+        return self.scale_factor_2_tag_size(scale_factor)
 
-    def scale_command(self, scale_factor, file_path, dst_dir=None, with_label=False):
+    def scale_command(self, scale_factor, file_path, dst_dir=None, with_label=False, border_width_pix=4):
         """
-        return command to scale the png file
+        return command to scale the png file using convert from imagemagick
         :param scale_factor:
         :type scale_factor: int
         :param file_path: path of the file to scale
@@ -64,6 +58,8 @@ class ApriltagScaler(object):
         :type with_label: bool
         :return: scale commands
         :rtype: list[string]
+        :param border_width: add border outside of the tag, default to 4 pixels => 1mm
+        :type border_width: int, optional
         """
         # check file
         assert os.path.isfile(file_path), file_path
@@ -77,26 +73,39 @@ class ApriltagScaler(object):
         file_name = os.path.splitext(basename)[0]
         extension = os.path.splitext(basename)[1]
         # calculate new file size based on scale factor
-        new_size = self._pix_2_mm(scale_factor*8)
+        new_size = self._pix_2_mm(scale_factor*self.origin_tag_size_pix)
         new_path = f"{os.path.join(dst_dir, file_name)}_{scale_factor*100}%_{new_size:.2f}mm{extension}"
-        # to use this command, make sure that ImageMagick has already been installed
-        # scale and add 1mm border
-        command = f"convert -scale {scale_factor*100}% -border 4 {file_path} {new_path}"
+
+        scaled_img_size = scale_factor*self.origin_img_size_pix + border_width_pix*2
+
+        command = f"convert -scale {scale_factor*100}% -border {border_width_pix} {file_path} {new_path}"
         # add label, this will be printed when all images combined with montage
-        command2 = f"convert -label \'{file_name}\\n{scale_factor*8} pix\\n{new_size:.2f} mm\' {new_path} {new_path}"
+        command2 = f"convert -label \'{file_name}\\nscaled_img_size: {scaled_img_size} pix\\ntag_size: {new_size:.2f} mm\' {new_path} {new_path}"
         return [command, command2]
     
-    def convert(self, src_dir, dst_dir=None, scale_factor = None, marker_size = None):
+    def convert(self, src_dir, dst_dir=None, scale_factor = None, tag_size = None):
+        """
+        scale all files in the src_dir, output to dst_dir
+        :param src_dir: dst directory with tag png files
+        :type src_dir: string
+        :param dst_dir: dst directory, defaults to None
+        :type dst_dir: string, optional
+        :param scale_factor: factor for scaling, defaults to None
+        :type scale_factor: int, optional
+        :param tag_size: tag size you want, defaults to None
+        :type tag_size: float, optional
+        :raises ValueError:
+        """
         # check input data
         assert os.path.isdir(src_dir), src_dir
         if dst_dir is not None:
             assert os.path.isdir(dst_dir)
-        if not (scale_factor or marker_size):
+        if not (scale_factor or tag_size):
             raise ValueError
 
         # calculate recommended scaling factor if no scale_factor defined
-        if scale_factor is None and marker_size is not None:
-            real_marker_size, scale_factor = self.recommended_value(marker_size)
+        if scale_factor is None and tag_size is not None:
+            real_tag_size, scale_factor = self.recommended_value(tag_size)
 
         # convert all files in the directory
         for file_name in os.listdir(src_dir):
@@ -109,13 +118,13 @@ class ApriltagScaler(object):
                 print(command)
                 os.system(command)
         
-        # montage * -geometry +12+12 output.png
-
 
 if __name__ == "__main__":
-    scaler = ApriltagScaler()
-    print(scaler.scale_factor_2_marker_size(10))
-    print(scaler.png_pix_2_marker_size(60))
+    scaler = ApriltagScaler(printer_dpi=72, origin_tag_size_pix=8, origin_img_size_pix=10)
+    print(scaler.scale_factor_2_tag_size(10))
+    print(scaler.png_pix_2_tag_size(60))
     print(scaler.recommended_value(30))
-    print(scaler.scale_command(10, "/mnt/d/test_dir/tag36_11_00000.png"))
-    scaler.convert("/mnt/d/test_dir/", dst_dir = "/mnt/d/test_dir/converted/", marker_size = 40)
+    print(scaler.scale_command(10, "demo/tag36_11_00000.png"))
+    scaler.convert("demo/", dst_dir = "demo/scaled/", tag_size = 40)
+
+    os.system('montage demo/scaled/* -geometry +12+12 demo/output/output.png')
