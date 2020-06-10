@@ -1,6 +1,6 @@
 # Apriltag Scaler
 
-This programm can help to calculate scale factor and convert apriltag to the size we want automatically.
+This programm can help to calculate scale factor and convert apriltag to the size we want automatically. It's compatible with all types of apriltags and also can be used for other similar tags.
 
 ![](https://raw.githubusercontent.com/rbforelle/apriltag_scaler/master/demo/output_tag36h11.png)
 
@@ -42,7 +42,7 @@ sudo apt install imagemagick
 ## Usage
 
 For apriltag 36h11, original tag size: 8x8 pixels, png size: 10x10 pixels  
-For apriltag 25h9, original tag size: 7x7 pixels, png size: 9x9 pixels
+For apriltag 16h9, original tag size: 6x6 pixels, png size: 8x8 pixels
 
 ```python
 # apriltag 36h11
