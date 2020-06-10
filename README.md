@@ -2,6 +2,8 @@
 
 This programm can help to calculate scale factor and convert apriltag to the size we want automatically.
 
+![](https://raw.githubusercontent.com/rbforelle/apriltag_scaler/master/demo/output/output.png)
+
 ## Calculation for scaling
 
 The original apriltags can be downloaded from <https://github.com/AprilRobotics/apriltag-imgs>
