@@ -16,7 +16,7 @@ Actually, it's 28.2222222mm.
 
 Calculation:
 
-- 36h11 tag, 
+- 36h11 tag
   - png size = 10x10 pix
   - marker size = 8x8 pix
 - scaled 1000%
@@ -30,7 +30,6 @@ Calculation:
 Otherweise, what's more common in usage is that, we need a `50mm` tag, how should I scale and print it? Attention that the scale factor should be an integer. A `scale factor of 17` should be used to generate tags with `size of 47.98mm`.
 
 All these can be done automatically with this programm.
-
 
 ## Install
 
@@ -52,6 +51,8 @@ scaler = ApritagScaler()
 
 ```python
 print(scaler.scale_factor_2_marker_size(10))
+
+=> 28.22222222222222
 ```
 
 ### png size[pix] => marker size[mm]
@@ -60,11 +61,13 @@ convert size of the scaled png file in pixel to size of the marker in mm
 
 ```python
 print(scaler.png_pix_2_marker_size(60)
+
+=> 16.93333333333333
 ```
 
 ### Get recommended scale factor
 
-input is size of the marker that we want. (not always can be achieved)
+input is size of the marker that we want(not always can be achieved), here 30mm
 
 ```python
 marker_size, scale_factor = scaler.recommended_value(30, round_func = math.floor)
