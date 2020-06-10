@@ -78,8 +78,11 @@ class ApriltagScaler(object):
         new_size = self._pix_2_mm(scale_factor*8)
         new_path = f"{os.path.join(dst_dir, file_name)}_{scale_factor*100}%_{new_size:.2f}mm{extension}"
         # to use this command, make sure that ImageMagick has already been installed
-        command = f"convert {file_path} -scale {scale_factor*100}% {new_path}"
-        return command
+        # scale and add 1mm border
+        command = f"convert -scale {scale_factor*100}% -border 4 {file_path} {new_path}"
+        # add label, this will be printed when all images combined with montage
+        command2 = f"convert -label \'{file_name}\\n{scale_factor*8} pix\\n{new_size:.2f} mm\' {new_path} {new_path}"
+        return [command, command2]
     
     def convert(self, src_dir, dst_dir=None, scale_factor = None, marker_size = None):
         # check input data
@@ -99,9 +102,12 @@ class ApriltagScaler(object):
             file_path = os.path.join(basedir, file_name)
             if not os.path.isfile(file_path):
                 continue
-            command = self.scale_command(scale_factor, file_path, dst_dir)
-            print(command)
-            os.system(command)
+            commands = self.scale_command(scale_factor, file_path, dst_dir)
+            for command in commands:
+                print(command)
+                os.system(command)
+        
+        # montage * -geometry +12+12 output.png
 
 
 if __name__ == "__main__":
