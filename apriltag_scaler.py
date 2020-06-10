@@ -118,4 +118,4 @@ if __name__ == "__main__":
     print(scaler.png_pix_2_marker_size(60))
     print(scaler.recommended_value(30))
     print(scaler.scale_command(10, "/mnt/d/test_dir/tag36_11_00000.png"))
-    scaler.convert("/mnt/d/test_dir/", dst_dir = "/mnt/d/test_dir/converted/", marker_size = 38)
+    scaler.convert("/mnt/d/test_dir/", dst_dir = "/mnt/d/test_dir/converted/", marker_size = 40)
